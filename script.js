@@ -137,17 +137,16 @@ class SteakTimer {
         const text = "WELL DONE";
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        
+        // Make canvas size more manageable
+        canvas.width = 800;
+        canvas.height = 400;
         
         // Set up text
-        ctx.font = 'bold 120px Arial';
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 100px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        
-        // Get text metrics
-        const textMetrics = ctx.measureText(text);
-        const textWidth = textMetrics.width;
         
         // Draw text
         ctx.fillText(text, canvas.width / 2, canvas.height / 2);
@@ -155,33 +154,55 @@ class SteakTimer {
         // Get pixel data
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
         const points = [];
-        const step = 10; // Sample every 10 pixels
+        const step = 8; // Sample more frequently
         
         // Sample points where text exists
         for (let y = 0; y < canvas.height; y += step) {
             for (let x = 0; x < canvas.width; x += step) {
-                const alpha = imageData[(y * canvas.width + x) * 4 + 3];
-                if (alpha > 0) {
+                const i = (y * canvas.width + x) * 4;
+                if (imageData[i + 3] > 0) { // If pixel is not transparent
                     points.push({
-                        x: (x / canvas.width) * 90,
-                        y: (y / canvas.height) * 90
+                        x: (x / canvas.width) * 80 + 10, // Add padding
+                        y: (y / canvas.height) * 60 + 20  // Add padding
                     });
                 }
             }
         }
 
-        // Animate cows to text positions
-        this.cows.forEach((cow, index) => {
-            const point = points[index % points.length];
-            if (point) {
+        // Make sure we have enough points
+        while (points.length < this.cows.length) {
+            const randomIndex = Math.floor(Math.random() * points.length);
+            points.push({...points[randomIndex]});
+        }
+
+        // Stop all existing animations
+        this.cows.forEach(cow => {
+            cow.style.animation = 'none';
+            cow.style.transition = 'all 2s ease-in-out';
+        });
+
+        // Small delay to ensure transitions are applied
+        setTimeout(() => {
+            // Animate cows to text positions
+            this.cows.forEach((cow, index) => {
+                const point = points[index % points.length];
+                
+                // Remove existing classes and animations
+                cow.className = 'cow';
+                
+                // Update to steak emoji
                 cow.textContent = '🥩';
-                cow.style.transition = 'all 1s ease-in-out';
+                
+                // Position the steak
                 cow.style.left = `${point.x}vw`;
                 cow.style.top = `${point.y}vh`;
-                cow.style.transform = 'rotate(0deg)';
-            }
-            cow.classList.add('animate__animated', 'animate__flip');
-        });
+                
+                // Add flip animation
+                setTimeout(() => {
+                    cow.classList.add('animate__animated', 'animate__flip');
+                }, index * 50); // Stagger the animations
+            });
+        }, 100);
     }
 
     toggleTimer() {

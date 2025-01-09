@@ -87,6 +87,7 @@ h1 {
     animation: spin 2s linear infinite;
     filter: drop-shadow(0 0 0 transparent);
     transition: filter 0.3s ease;
+    z-index: 1000;
 }
 
 .cow.danger {
@@ -182,5 +183,45 @@ h1 {
     
     .cow, .steak {
         font-size: 2rem;
+    }
+} 
+
+/* Add specific styles for steaks */
+.cow.steak {
+    animation: none;
+    transition: all 2s ease-in-out;
+}
+
+/* Ensure animate.css animations work properly */
+.animate__animated {
+    animation-duration: 1s;
+    animation-fill-mode: both;
+}
+
+.animate__flip {
+    backface-visibility: visible !important;
+    animation-name: flip;
+}
+
+@keyframes flip {
+    from {
+        transform: perspective(400px) scale3d(1, 1, 1) translate3d(0, 0, 0) rotate3d(0, 1, 0, -360deg);
+        animation-timing-function: ease-out;
+    }
+    40% {
+        transform: perspective(400px) scale3d(1, 1, 1) translate3d(0, 0, 150px) rotate3d(0, 1, 0, -190deg);
+        animation-timing-function: ease-out;
+    }
+    50% {
+        transform: perspective(400px) scale3d(1, 1, 1) translate3d(0, 0, 150px) rotate3d(0, 1, 0, -170deg);
+        animation-timing-function: ease-in;
+    }
+    80% {
+        transform: perspective(400px) scale3d(0.95, 0.95, 0.95) translate3d(0, 0, 0) rotate3d(0, 1, 0, 0deg);
+        animation-timing-function: ease-in;
+    }
+    to {
+        transform: perspective(400px) scale3d(1, 1, 1) translate3d(0, 0, 0) rotate3d(0, 1, 0, 0deg);
+        animation-timing-function: ease-in;
     }
 } 
