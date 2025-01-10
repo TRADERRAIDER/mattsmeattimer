@@ -5,13 +5,9 @@ class SteakTimer {
         this.isRunning = false;
         this.cows = [];
         
-        // Create audio elements with different beep sounds
-        this.intermediateBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-        this.finalBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2865/2865-preview.mp3');
-        
-        // Preload the audio
-        this.intermediateBeep.load();
-        this.finalBeep.load();
+        // Initialize audio as null
+        this.intermediateBeep = null;
+        this.finalBeep = null;
         
         // Get DOM elements
         this.startStopBtn = document.getElementById('startStop');
@@ -21,7 +17,13 @@ class SteakTimer {
         this.animationContainer = document.querySelector('.animation-container');
         
         // Bind event listeners
-        this.startStopBtn.addEventListener('click', () => this.toggleTimer());
+        this.startStopBtn.addEventListener('click', () => {
+            // Initialize audio on first click
+            if (!this.intermediateBeep) {
+                this.initializeAudio();
+            }
+            this.toggleTimer();
+        });
         this.resetBtn.addEventListener('click', () => this.resetTimer());
         
         // Initialize speech synthesis with preferred voice
@@ -230,8 +232,14 @@ class SteakTimer {
         this.isRunning = false;
         this.startStopBtn.textContent = 'Start';
         clearInterval(this.timerId);
-        this.intermediateBeep.pause();
-        this.finalBeep.pause();
+        if (this.intermediateBeep) {
+            this.intermediateBeep.pause();
+            this.intermediateBeep.currentTime = 0;
+        }
+        if (this.finalBeep) {
+            this.finalBeep.pause();
+            this.finalBeep.currentTime = 0;
+        }
         
         // Remove all cows
         this.cows.forEach(cow => cow.remove());
@@ -270,7 +278,34 @@ class SteakTimer {
         this.secondsDisplay.textContent = seconds.toString().padStart(2, '0');
     }
 
+    initializeAudio() {
+        // Create and load audio elements
+        this.intermediateBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        this.finalBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2865/2865-preview.mp3');
+        
+        // Enable inline playback for iOS
+        this.intermediateBeep.setAttribute('playsinline', '');
+        this.finalBeep.setAttribute('playsinline', '');
+        
+        // Load the audio
+        this.intermediateBeep.load();
+        this.finalBeep.load();
+
+        // Create a silent audio context for iOS
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioContext = new AudioContext();
+        
+        // Connect audio elements to the context
+        const intermediateSource = audioContext.createMediaElementSource(this.intermediateBeep);
+        const finalSource = audioContext.createMediaElementSource(this.finalBeep);
+        
+        intermediateSource.connect(audioContext.destination);
+        finalSource.connect(audioContext.destination);
+    }
+
     playIntermediateBeep() {
+        if (!this.intermediateBeep) return;
+        
         // Reset the audio before playing
         this.intermediateBeep.currentTime = 0;
         this.intermediateBeep.loop = true;
@@ -280,11 +315,8 @@ class SteakTimer {
         
         if (playPromise !== undefined) {
             playPromise.then(() => {
-                // Playback started successfully
                 console.log("Intermediate beep started");
-                // Speak the flip message
                 this.speechSynth.speak(this.flipMessage);
-                // Stop after 20 seconds
                 setTimeout(() => {
                     this.intermediateBeep.pause();
                     this.intermediateBeep.currentTime = 0;
@@ -296,6 +328,8 @@ class SteakTimer {
     }
 
     playFinalBeep() {
+        if (!this.finalBeep) return;
+        
         // Reset the audio before playing
         this.finalBeep.currentTime = 0;
         this.finalBeep.loop = true;
@@ -305,11 +339,8 @@ class SteakTimer {
         
         if (playPromise !== undefined) {
             playPromise.then(() => {
-                // Playback started successfully
                 console.log("Final beep started");
-                // Speak the done message
                 this.speechSynth.speak(this.doneMessage);
-                // Stop after 30 seconds
                 setTimeout(() => {
                     this.finalBeep.pause();
                     this.finalBeep.currentTime = 0;
